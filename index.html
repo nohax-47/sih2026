@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PAIMANA Foresight</title>
+<style>
+:root{
+  --canvas:#F3F5F9; --surface:#FFFFFF; --navy:#0F1F3A; --navy-mid:#17335C;
+  --accent:#2F6FB0; --accent-dim:#E7EEF6; --ink:#1B2430; --muted:#64707E;
+  --line:#E2E6EE; --stable:#1E7A4C; --stable-tint:#E7F3EC;
+  --high:#A9720A; --high-tint:#FBF1DE; --critical:#B23A32; --critical-tint:#FBEAE8;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+body{margin:0;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--canvas);color:var(--ink);font-size:14px}
+.num{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+a{color:inherit}
+
+/* ---- top nav ---- */
+header.topbar{background:var(--navy);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;position:sticky;top:0;z-index:20;padding-top:calc(14px + env(safe-area-inset-top,0px))}
+.brandblock{display:flex;align-items:baseline;gap:10px}
+.brandblock h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px;cursor:pointer}
+.brandblock .tag{font-size:11px;color:#9FB2CC;border:1px solid #33507A;padding:2px 7px;border-radius:3px}
+nav.navlinks{display:flex;gap:4px}
+nav.navlinks button{background:transparent;border:none;color:#B9C7DE;padding:8px 12px;font-size:13px;border-radius:4px;cursor:pointer}
+nav.navlinks button:hover{background:#17335C;color:#fff}
+nav.navlinks button.active{background:#fff;color:var(--navy);font-weight:600}
+
+.view{display:none}
+.view.active{display:block}
+
+/* ---- home / overview ---- */
+.homewrap{max-width:1040px;margin:0 auto;padding:0 22px}
+.introband{padding:48px 0 36px;border-bottom:1px solid var(--line)}
+.introband h2{font-size:26px;margin:0 0 10px;color:var(--navy);max-width:620px;line-height:1.3}
+.introband p{font-size:14.5px;color:var(--muted);max-width:560px;line-height:1.6;margin:0 0 22px}
+.cta{background:var(--navy);color:#fff;border:none;padding:11px 20px;font-size:13.5px;border-radius:5px;cursor:pointer;font-weight:600}
+.cta:hover{background:var(--navy-mid)}
+
+.statstrip{display:flex;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin-top:28px;overflow-x:auto}
+.stat{padding:16px 22px;border-right:1px solid var(--line);flex:1;min-width:160px}
+.stat:last-child{border-right:none}
+.stat .v{font-size:20px;font-weight:700;color:var(--navy)}
+.stat .l{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+.sectionband{padding:34px 0;border-bottom:1px solid var(--line)}
+.sectionband h3{font-size:15px;color:var(--navy);margin:0 0 14px}
+.methodgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.methodcard{border:1px solid var(--line);border-radius:6px;padding:16px;background:var(--surface)}
+.methodcard .k{font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.methodcard .d{font-size:12px;color:var(--muted);line-height:1.55}
+.teamrow{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+.teamrow .t{font-size:13px;color:var(--ink)}
+.teamrow .t .r{color:var(--muted);font-size:11.5px;display:block}
+footer.pagefoot{background:var(--navy);color:#9FB2CC;padding:20px 22px;font-size:11.5px;margin-top:20px}
+footer.pagefoot .homewrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+@media(max-width:720px){.methodgrid{grid-template-columns:1fr}}
+
+/* ---- dashboard ---- */
+.statstrip.dash{margin:0;border-radius:0;border-left:none;border-right:none}
+.controls{background:var(--surface);border-bottom:1px solid var(--line);padding:12px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{background:#fff;border:none;padding:7px 13px;font-size:12.5px;color:var(--muted);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:none}
+.seg button.on{background:var(--navy);color:#fff}
+select,input[type="text"]{border:1px solid var(--line);border-radius:5px;padding:7px 10px;font-size:12.5px;color:var(--ink);background:#fff}
+input[type="text"]{width:220px}
+.controls .spacer{flex:1}
+.controls .count{font-size:12px;color:var(--muted)}
+
+.listpane{padding:16px 22px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--surface)}
+thead th{text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--line)}
+tbody td{padding:10px 10px;border-bottom:1px solid var(--line);color:var(--ink)}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--accent-dim)}
+.projname{font-weight:600}
+.projsub{color:var(--muted);font-size:11px;margin-top:1px}
+.tierbadge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:700;letter-spacing:.2px}
+.tierbadge.stable{background:var(--stable-tint);color:var(--stable)}
+.tierbadge.high{background:var(--high-tint);color:var(--high)}
+.tierbadge.critical{background:var(--critical-tint);color:var(--critical)}
+.scorecell{font-weight:700}
+.empty{color:var(--muted);font-size:12.5px;text-align:center;padding:40px 20px}
+
+/* ---- modal ---- */
+.overlay{position:fixed;inset:0;background:rgba(15,31,58,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50;padding:22px}
+.overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:10px;max-width:520px;width:100%;max-height:86vh;overflow-y:auto;padding:22px;position:relative;box-shadow:0 18px 50px rgba(15,31,58,.28)}
+.modal .closeBtn{position:absolute;top:14px;right:14px;background:var(--canvas);border:1px solid var(--line);border-radius:5px;width:28px;height:28px;cursor:pointer;color:var(--muted);font-size:15px;line-height:1}
+.modal .closeBtn:hover{background:var(--accent-dim)}
+.modal h2{font-size:16px;margin:0 4px 2px 0;color:var(--navy);padding-right:30px}
+.modal .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+.detailrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.bignum{font-size:26px;font-weight:800;color:var(--navy)}
+.blocklabel{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+.bar{margin-bottom:8px}
+.bar .barlbl{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px}
+.bartrack{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.barfill{height:100%;background:var(--accent);border-radius:3px}
+.rangebox{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:4px}
+.rangebar{flex:1;height:6px;background:var(--line);border-radius:3px;position:relative}
+.rangefill{position:absolute;height:100%;background:var(--navy-mid);border-radius:3px}
+.driverlist{list-style:none;padding:0;margin:0;font-size:12px}
+.driverlist li{padding:6px 0;border-bottom:1px solid var(--line)}
+.driverlist li:last-child{border-bottom:none}
+.whatif label{display:block;font-size:11.5px;color:var(--muted);margin:10px 0 4px}
+.whatif input[type="range"]{width:100%}
+.whatif .rv{font-size:12px;font-weight:600;color:var(--navy)}
+.briefbox{background:var(--accent-dim);border-radius:5px;padding:10px 12px;font-size:12px;line-height:1.5;margin-top:8px}
+.footnote{font-size:10.5px;color:var(--muted);margin-top:6px}
+
+/* ---- chatbot ---- */
+.chatlauncher{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:12px;background:var(--navy);border:none;cursor:pointer;z-index:60;box-shadow:0 8px 22px rgba(15,31,58,.3)}
+.chatlauncher svg{width:22px;height:22px}
+.chatpanel{position:fixed;right:22px;bottom:calc(84px + env(safe-area-inset-bottom,0px));width:320px;max-width:calc(100vw - 44px);height:420px;background:var(--surface);border-radius:10px;box-shadow:0 18px 50px rgba(15,31,58,.28);z-index:60;display:none;flex-direction:column;overflow:hidden}
+.chatpanel.show{display:flex}
+.chathead{background:var(--navy);color:#fff;padding:12px 14px;font-size:12.5px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.chathead .closeBtn{background:transparent;border:none;color:#B9C7DE;cursor:pointer;font-size:14px}
+.chathead small{font-size:9px;letter-spacing:.45px;color:#B9C7DE;border:1px solid #33507A;border-radius:3px;padding:2px 5px;margin-left:5px;font-weight:600}
+.chatbody{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.chatquick{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.chatquick button{background:#fff;border:1px solid var(--line);color:var(--navy);border-radius:999px;padding:5px 8px;font-size:10.5px;cursor:pointer}
+.chatquick button:hover{background:var(--accent-dim)}
+.typing{display:flex;gap:3px;align-items:center;min-width:42px}
+.typing i{display:block;width:4px;height:4px;border-radius:50%;background:var(--muted);animation:typingDot 1s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes typingDot{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-2px);opacity:1}}
+.msg{max-width:85%;padding:8px 10px;border-radius:6px;line-height:1.45}
+.msg.bot{background:var(--accent-dim);align-self:flex-start;color:var(--ink)}
+.msg.user{background:var(--navy);color:#fff;align-self:flex-end}
+.chatinputrow{border-top:1px solid var(--line);padding:8px;display:flex;gap:6px}
+.chatinputrow input{flex:1;border:1px solid var(--line);border-radius:5px;padding:8px 9px;font-size:12.5px}
+.chatinputrow button{background:var(--navy);color:#fff;border:none;border-radius:5px;padding:8px 12px;font-size:12.5px;cursor:pointer}.chatinputrow button:disabled{opacity:.55;cursor:not-allowed}
+.chatnote{font-size:9.5px;color:var(--muted);padding:6px 12px 10px;text-align:center}
+
+@media(max-width:600px){.chatpanel{right:12px;width:calc(100vw - 24px)}.chatlauncher{right:16px}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brandblock">
+    <h1 onclick="showView('home')">PAIMANA Foresight</h1>
+    <span class="tag">Prototype, sample data</span>
+  </div>
+  <nav class="navlinks">
+    <button data-view="home" class="active" onclick="showView('home')">Overview</button>
+    <button data-view="dashboard" onclick="showView('dashboard')">Dashboard</button>
+  </nav>
+</header>
+
+<!-- ============ HOME VIEW ============ -->
+<section id="view-home" class="view active">
+  <div class="homewrap">
+    <div class="introband">
+      <h2>Monthly flash reports show cost overruns after they happen. This platform is built to show them before.</h2>
+      <p>PAIMANA Foresight scores every tracked project for delay and cost risk each month, explains what's driving that score, and ranks projects by where review time will save the most.</p>
+      <button class="cta" onclick="showView('dashboard')">Open dashboard</button>
+    </div>
+
+    <div class="statstrip">
+      <div class="stat"><div class="v num">1,775</div><div class="l">central sector projects tracked</div></div>
+      <div class="stat"><div class="v num">+10.1%</div><div class="l">cost escalation, ₹33.70L cr to ₹37.11L cr</div></div>
+      <div class="stat"><div class="v num">780 / 1,821</div><div class="l">projects currently delayed</div></div>
+      <div class="stat"><div class="v num" id="criticalCountHome">0</div><div class="l">projects at critical tier in this prototype</div></div>
+    </div>
+
+    <div class="sectionband">
+      <h3>How a score is built</h3>
+      <div class="methodgrid">
+        <div class="methodcard"><div class="k">Prediction</div><div class="d">XGBoost and LightGBM estimate cost overrun, time overrun and milestone success from each project's cost, timeline and progress data.</div></div>
+        <div class="methodcard"><div class="k">Delay analytics</div><div class="d">Cox Proportional Hazards and Kaplan-Meier estimate delay hazard and survival probability, since timing risk needs a different model than a regression.</div></div>
+        <div class="methodcard"><div class="k">Explanation</div><div class="d">SHAP breaks every score down into the specific features driving it, so a reviewer sees the cause, not just a number.</div></div>
+      </div>
+    </div>
+
+    <div class="sectionband" style="border-bottom:none">
+      <h3>Team</h3>
+      <div class="teamrow">
+        <div class="t">Jatta Ke Chorre<span class="r">Smart India Hackathon 2026, PS 26103</span></div>
+      </div>
+    </div>
+  </div>
+  <footer class="pagefoot">
+    <div class="homewrap">
+      <span>Source dataset: PAIMANA, Ministry of Statistics and Programme Implementation</span>
+      <span>Built for Smart India Hackathon 2026</span>
+    </div>
+  </footer>
+</section>
+
+<!-- ============ DASHBOARD VIEW ============ -->
+<section id="view-dashboard" class="view">
+  <div class="statstrip dash">
+    <div class="stat"><div class="v num">1,775</div><div class="l">central sector projects tracked</div></div>
+    <div class="stat"><div class="v num">+10.1%</div><div class="l">cost escalation, ₹33.70L cr to ₹37.11L cr</div></div>
+    <div class="stat"><div class="v num">780 / 1,821</div><div class="l">projects currently delayed</div></div>
+    <div class="stat"><div class="v num" id="criticalCount">0</div><div class="l">projects at critical tier below</div></div>
+  </div>
+
+  <div class="controls">
+    <div class="seg" id="tierSeg">
+      <button data-tier="all" class="on">All</button>
+      <button data-tier="critical">Critical</button>
+      <button data-tier="high">High</button>
+      <button data-tier="stable">Stable</button>
+    </div>
+    <select id="sectorSelect"><option value="all">All sectors</option></select>
+    <input type="text" id="searchInput" placeholder="Search project or agency">
+    <div class="spacer"></div>
+    <div class="count" id="resultCount"></div>
+  </div>
+
+  <div class="listpane">
+    <table>
+      <thead><tr><th>Rank</th><th>Project</th><th>Sector</th><th>Tier</th><th>Score</th><th>Delay &gt; 6mo</th></tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ PROJECT MODAL ============ -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBody" role="dialog" aria-modal="true"></div>
+</div>
+
+<!-- ============ CHATBOT ============ -->
+<button class="chatlauncher" id="chatLauncher" aria-label="Open portfolio assistant">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/></svg>
+</button>
+<div class="chatpanel" id="chatPanel">
+  <div class="chathead">
+    <span>PAIMANA assistant <small>AI</small></span>
+    <button class="closeBtn" id="chatClose">Close</button>
+  </div>
+  <div class="chatbody" id="chatBody"></div>
+  <div class="chatinputrow">
+    <input type="text" id="chatInput" placeholder="Ask about a project, tier, or risk driver" autocomplete="off">
+    <button id="chatSend">Send</button>
+  </div>
+  <div class="chatnote">Gemini answers from the prototype dataset. Not a live government data feed.</div>
+</div>
+
+<script>
+const projects = [
+  { id:1, name:"Western Dedicated Freight Corridor, Dadri to JNPT", agency:"Ministry of Railways", sector:"Rail", tier:"critical", score:82, delay6:38, delay12:24, delay24:9, costP10:6, costP90:21,
+    drivers:["Rain during earthwork on the Vadodara segment", "Steel price index up 12% this quarter", "Three schedule date slips logged since sanction", "Pending land parcel clearance on two stretches"] },
+  { id:2, name:"Delhi-Meerut Regional Rapid Transit System", agency:"NCRTC", sector:"Urban Transit", tier:"high", score:64, delay6:24, delay12:15, delay24:6, costP10:4, costP90:14,
+    drivers:["Utility shifting delay near Ghaziabad", "One schedule date slip logged", "Contractor cash flow flag from remarks scan"] },
+  { id:3, name:"Talcher Coal Handling and Rapid Loading Modernisation", agency:"Ministry of Coal", sector:"Mining", tier:"high", score:58, delay6:21, delay12:13, delay24:5, costP10:5, costP90:17,
+    drivers:["Flood-zone overlap on GIS layer", "Litigation pending on right of way", "Equipment procurement lag"] },
+  { id:4, name:"Bengaluru Metro Rail Phase 3, Reach 1", agency:"BMRCL", sector:"Urban Transit", tier:"high", score:55, delay6:19, delay12:11, delay24:4, costP10:3, costP90:12,
+    drivers:["Traffic diversion permissions pending", "Two schedule date slips logged"] },
+  { id:5, name:"Deoghar-Dumka-Rampurhat New Line", agency:"Ministry of Railways", sector:"Rail", tier:"stable", score:31, delay6:9, delay12:5, delay24:2, costP10:1, costP90:6,
+    drivers:["Progress tracking within sanctioned band"] },
+  { id:6, name:"New Ganga Grid Solar Transmission Package", agency:"Ministry of Power", sector:"Power", tier:"stable", score:27, delay6:7, delay12:4, delay24:1, costP10:0, costP90:5,
+    drivers:["Progress tracking within sanctioned band"] },
+  { id:7, name:"Western Dedicated Freight Corridor, Rewari to Iqbalgarh", agency:"Ministry of Railways", sector:"Rail", tier:"critical", score:79, delay6:35, delay12:22, delay24:8, costP10:7, costP90:20,
+    drivers:["Flood-zone exposure on GIS layer", "Steel price index up 12% this quarter", "Pending forest clearance on one stretch"] },
+  { id:8, name:"Digha-Sonepur Rail Bridge Approach Works", agency:"Ministry of Railways", sector:"Rail", tier:"stable", score:34, delay6:11, delay12:6, delay24:2, costP10:1, costP90:7,
+    drivers:["Monsoon window built into original schedule"] },
+  { id:9, name:"Chennai Peripheral Ring Road, Package 4", agency:"NHAI", sector:"Road", tier:"high", score:61, delay6:22, delay12:14, delay24:5, costP10:4, costP90:15,
+    drivers:["Land acquisition dispute in two villages", "Contractor cash flow flag from remarks scan"] },
+  { id:10, name:"Polavaram Irrigation, Left Main Canal", agency:"Ministry of Jal Shakti", sector:"Irrigation", tier:"critical", score:74, delay6:31, delay12:19, delay24:7, costP10:6, costP90:19,
+    drivers:["Rehabilitation and resettlement pending", "Two schedule date slips logged", "Litigation pending on right of way"] },
+];
+
+const state = { tier:"all", sector:"all", search:"" };
+
+function showView(v){
+  document.querySelectorAll(".view").forEach(el=>el.classList.remove("active"));
+  document.getElementById("view-"+v).classList.add("active");
+  document.querySelectorAll(".navlinks button").forEach(b=>b.classList.toggle("active", b.dataset.view===v));
+  window.scrollTo(0,0);
+}
+
+const tbody = document.getElementById("tableBody");
+const resultCount = document.getElementById("resultCount");
+const sectorSelect = document.getElementById("sectorSelect");
+
+[...new Set(projects.map(p=>p.sector))].sort().forEach(s=>{
+  const o = document.createElement("option"); o.value = s; o.textContent = s;
+  sectorSelect.appendChild(o);
+});
+
+const critCount = projects.filter(p=>p.tier==="critical").length;
+document.getElementById("criticalCount").textContent = critCount;
+document.getElementById("criticalCountHome").textContent = critCount;
+
+function filtered(){
+  return projects.filter(p=>{
+    if(state.tier!=="all" && p.tier!==state.tier) return false;
+    if(state.sector!=="all" && p.sector!==state.sector) return false;
+    if(state.search){
+      const q = state.search.toLowerCase();
+      if(!p.name.toLowerCase().includes(q) && !p.agency.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=>b.score-a.score);
+}
+
+function renderTable(){
+  const rows = filtered();
+  resultCount.textContent = rows.length + " of " + projects.length + " projects";
+  tbody.innerHTML = "";
+  rows.forEach((p, idx)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td class="num">'+String(idx+1).padStart(2,"0")+'</td>'+
+      '<td><div class="projname">'+p.name+'</div><div class="projsub">'+p.agency+'</div></td>'+
+      '<td>'+p.sector+'</td>'+
+      '<td><span class="tierbadge '+p.tier+'">'+p.tier.toUpperCase()+'</span></td>'+
+      '<td class="scorecell num">'+p.score+'</td>'+
+      '<td class="num">'+p.delay6+'%</td>';
+    tr.addEventListener("click", ()=>openModal(p.id));
+    tbody.appendChild(tr);
+  });
+  if(rows.length===0){
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No projects match these filters.</td></tr>';
+  }
+}
+
+document.getElementById("tierSeg").addEventListener("click", (e)=>{
+  if(e.target.tagName!=="BUTTON") return;
+  [...e.currentTarget.children].forEach(b=>b.classList.remove("on"));
+  e.target.classList.add("on");
+  state.tier = e.target.dataset.tier;
+  renderTable();
+});
+sectorSelect.addEventListener("change", e=>{ state.sector = e.target.value; renderTable(); });
+document.getElementById("searchInput").addEventListener("input", e=>{ state.search = e.target.value; renderTable(); });
+
+/* ---- modal ---- */
+const overlay = document.getElementById("overlay");
+const modalBody = document.getElementById("modalBody");
+
+function clampedScore(p, s, r){ return Math.max(0, Math.min(100, p.score + s*0.3 + r*0.2)); }
+function clampedDelay(p, s, r){ return Math.max(0, Math.min(100, p.delay6 + s*0.15 + r*0.25)); }
+function briefText(p, s, r){
+  const tierWord = p.tier==="critical" ? "requires immediate review" : p.tier==="high" ? "should be reviewed this cycle" : "is tracking within range";
+  let line = p.name + " sits at a risk score of " + Math.round(clampedScore(p,s,r)) + " and " + tierWord + ". ";
+  if(p.drivers.length){ line += "The leading factors are " + p.drivers.slice(0,2).join(" and ").toLowerCase() + "."; }
+  return line;
+}
+
+function openModal(id){
+  const p = projects.find(x=>x.id===id);
+  const driverItems = p.drivers.map(d=>'<li>'+d+'</li>').join("");
+  modalBody.innerHTML =
+    '<button class="closeBtn" id="modalCloseBtn">Close</button>'+
+    '<h2>'+p.name+'</h2>'+
+    '<div class="sub">'+p.agency+' · '+p.sector+'</div>'+
+    '<div class="detailrow"><span class="tierbadge '+p.tier+'">'+p.tier.toUpperCase()+'</span><span class="bignum num" id="scoreOut">'+p.score+'</span></div>'+
+
+    '<div class="blocklabel">Delay probability</div>'+
+    '<div class="bar"><div class="barlbl"><span>Past 6 months</span><span class="num" id="d6out">'+p.delay6+'%</span></div><div class="bartrack"><div class="barfill" id="d6bar" style="width:'+p.delay6+'%"></div></div></div>'+
+    '<div class="bar"><div class="barlbl"><span>Past 12 months</span><span class="num">'+p.delay12+'%</span></div><div class="bartrack"><div class="barfill" style="width:'+p.delay12+'%"></div></div></div>'+
+    '<div class="bar"><div class="barlbl"><span>Past 24 months</span><span class="num">'+p.delay24+'%</span></div><div class="bartrack"><div class="barfill" style="width:'+p.delay24+'%"></div></div></div>'+
+
+    '<div class="blocklabel">Cost overrun range</div>'+
+    '<div class="rangebox"><span class="num">'+p.costP10+'%</span><div class="rangebar"><div class="rangefill" style="left:'+p.costP10+'%;width:'+(p.costP90-p.costP10)+'%"></div></div><span class="num">'+p.costP90+'%</span></div>'+
+    '<div class="footnote">P10 to P90 band, not a single-point claim</div>'+
+
+    '<div class="blocklabel">Why this score</div>'+
+    '<ul class="driverlist">'+driverItems+'</ul>'+
+
+    '<div class="blocklabel">What-if simulator</div>'+
+    '<div class="whatif">'+
+      '<label>Steel price change <span class="rv" id="steelVal">0%</span></label>'+
+      '<input type="range" id="steelSlider" min="-10" max="30" value="0">'+
+      '<label>Rainfall anomaly <span class="rv" id="rainVal">0%</span></label>'+
+      '<input type="range" id="rainSlider" min="-20" max="40" value="0">'+
+      '<div class="footnote">Illustrative recompute for this prototype, not a live model output</div>'+
+    '</div>'+
+
+    '<div class="blocklabel">Generated brief</div>'+
+    '<div class="briefbox" id="briefOut">'+briefText(p,0,0)+'</div>';
+
+  overlay.classList.add("show");
+  document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+  const steelSlider = document.getElementById("steelSlider");
+  const rainSlider = document.getElementById("rainSlider");
+  function update(){
+    const s = parseInt(steelSlider.value,10), r = parseInt(rainSlider.value,10);
+    document.getElementById("steelVal").textContent = (s>0?"+":"")+s+"%";
+    document.getElementById("rainVal").textContent = (r>0?"+":"")+r+"%";
+    document.getElementById("scoreOut").textContent = Math.round(clampedScore(p,s,r));
+    const nd = clampedDelay(p,s,r);
+    document.getElementById("d6out").textContent = Math.round(nd)+"%";
+    document.getElementById("d6bar").style.width = nd+"%";
+    document.getElementById("briefOut").textContent = briefText(p,s,r);
+  }
+  steelSlider.addEventListener("input", update);
+  rainSlider.addEventListener("input", update);
+}
+function closeModal(){ overlay.classList.remove("show"); }
+overlay.addEventListener("click", e=>{ if(e.target===overlay) closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+
+/* ---- chatbot ---- */
+const chatLauncher = document.getElementById("chatLauncher");
+const chatPanel = document.getElementById("chatPanel");
+const chatBody = document.getElementById("chatBody");
+const chatInput = document.getElementById("chatInput");
+const chatSend = document.getElementById("chatSend");
+
+const chatState = {
+  history: [],
+  busy: false
+};
+
+function addMsg(text, who){
+  const d = document.createElement("div");
+  d.className = "msg " + who;
+  d.textContent = text;
+  chatBody.appendChild(d);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  return d;
+}
+
+function addTyping(){
+  const d = document.createElement("div");
+  d.className = "msg bot typing";
+  d.innerHTML = "<i></i><i></i><i></i>";
+  chatBody.appendChild(d);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  return d;
+}
+
+function addQuickPrompts(){
+  const wrap = document.createElement("div");
+  wrap.className = "chatquick";
+  [
+    ["Show critical projects", "Which projects are currently critical?"],
+    ["Why is WDFC risky?", "Why is Western Dedicated Freight Corridor, Dadri to JNPT high risk?"],
+    ["Count projects", "How many sample projects are loaded?"]
+  ].forEach(([label, value])=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    b.addEventListener("click", ()=>sendChat(value));
+    wrap.appendChild(b);
+  });
+  chatBody.appendChild(wrap);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+let greeted = false;
+chatLauncher.addEventListener("click", ()=>{
+  chatPanel.classList.toggle("show");
+  if(!greeted && chatPanel.classList.contains("show")){
+    addMsg("Hey — I can help you explore the projects in this prototype. Ask me about risk tiers, delay estimates, cost-overrun ranges, or the drivers behind a score.", "bot");
+    addQuickPrompts();
+    greeted = true;
+    setTimeout(()=>chatInput.focus(), 50);
+  }
+});
+
+document.getElementById("chatClose").addEventListener("click", ()=>chatPanel.classList.remove("show"));
+
+function localFallback(q){
+  const query = q.toLowerCase();
+  if(query.includes("critical")){
+    const list = projects.filter(p=>p.tier==="critical").map(p=>p.name).join("; ");
+    return "Critical tier in this prototype: " + list + ".";
+  }
+  if(query.includes("high")){
+    const list = projects.filter(p=>p.tier==="high").map(p=>p.name).join("; ");
+    return "High tier in this prototype: " + list + ".";
+  }
+  if(query.includes("stable")){
+    const list = projects.filter(p=>p.tier==="stable").map(p=>p.name).join("; ");
+    return "Stable tier in this prototype: " + list + ".";
+  }
+  const match = projects.find(p=>{
+    const firstWords = p.name.toLowerCase().split(",")[0].split(" ").slice(0,3).join(" ");
+    return query.includes(firstWords) || p.name.toLowerCase().includes(query);
+  });
+  if(match){
+    return match.name + " is in the " + match.tier.toUpperCase() +
+      " tier with a score of " + match.score +
+      ". Delay beyond 6 months is estimated at " + match.delay6 +
+      "%. Main driver: " + match.drivers[0] + ".";
+  }
+  if(query.includes("how many") || query.includes("total") || query.includes("count")){
+    return "This prototype contains " + projects.length + " sample projects out of the 1,775 projects referenced on the overview screen.";
+  }
+  return "I can answer questions about the prototype's project tiers, scores, delays, cost-overrun ranges, and risk drivers. Try asking which projects are critical.";
+}
+
+function buildHistoryPayload(){
+  return chatState.history.slice(-10).map(m=>({role:m.role, text:m.text}));
+}
+
+async function sendToGemini(message){
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      message,
+      history: buildHistoryPayload(),
+      projects
+    })
+  });
+
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+
+  if(!res.ok){
+    throw new Error(data.error || "The assistant request failed.");
+  }
+  if(!data.text){
+    throw new Error("The assistant returned an empty response.");
+  }
+  return data.text;
+}
+
+async function sendChat(valueFromChip){
+  if(chatState.busy) return;
+
+  const v = (typeof valueFromChip === "string" ? valueFromChip : chatInput.value).trim();
+  if(!v) return;
+
+  addMsg(v, "user");
+  chatInput.value = "";
+  chatState.history.push({role:"user", text:v});
+  chatState.busy = true;
+  chatSend.disabled = true;
+  chatInput.disabled = true;
+
+  const typing = addTyping();
+
+  try{
+    const reply = await sendToGemini(v);
+    typing.remove();
+    addMsg(reply, "bot");
+    chatState.history.push({role:"model", text:reply});
+  }catch(err){
+    typing.remove();
+    const fallback = localFallback(v);
+    addMsg("Gemini is temporarily unavailable, so I’m showing the prototype fallback instead:\n\n" + fallback, "bot");
+    chatState.history.push({role:"model", text:fallback});
+    console.error("Chat API error:", err);
+  }finally{
+    chatState.busy = false;
+    chatSend.disabled = false;
+    chatInput.disabled = false;
+    chatInput.focus();
+  }
+}
+
+chatSend.addEventListener("click", ()=>sendChat());
+chatInput.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && !e.shiftKey){
+    e.preventDefault();
+    sendChat();
+  }
+});
+
+
+renderTable();
+</script>
+</body>
+</html>
